@@ -1,0 +1,50 @@
+# ==========================
+# Build folders
+# ==========================
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+Makefile
+*.ninja
+.ninja_deps
+.ninja_log
+
+# ==========================
+# Compiled output
+# ==========================
+*.o
+*.obj
+*.elf
+*.bin
+*.map
+*.hex
+*.out
+*.d
+*.a
+
+# ==========================
+# STM32CubeIDE / IDE files
+# ==========================
+.settings/
+.metadata/
+*.launch
+.project
+.cproject
+
+# ==========================
+# VS Code
+# ==========================
+.vscode/
+
+# ==========================
+# Logs
+# ==========================
+*.log
+
+# ==========================
+# OS files
+# ==========================
+Thumbs.db
+.DS_Store

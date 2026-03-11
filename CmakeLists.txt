@@ -1,0 +1,112 @@
+cmake_minimum_required(VERSION 3.15)
+
+project(STM32F407_Project C ASM)
+
+set(CMAKE_C_STANDARD 11)
+
+# MCU Flags
+set(MCU_FLAGS
+    -mcpu=cortex-m4
+    -mthumb
+    -mfpu=fpv4-sp-d16
+    -mfloat-abi=hard
+)
+
+# Include directories
+include_directories(
+    Core/Inc
+    Drivers/CMSIS/Include
+    Drivers/CMSIS/Device/ST/STM32F4xx/Include
+    Drivers/STM32F4xx_HAL_Driver/Inc
+    ThirdParty/FreeRTOS
+    ThirdParty/FreeRTOS/include
+    ThirdParty/FreeRTOS/portable/GCC/ARM_CM4F
+
+)
+
+# Source files
+file(GLOB_RECURSE SOURCES
+    Core/Src/*.c
+    Drivers/STM32F4xx_HAL_Driver/Src/*.c
+    startup/*.s
+    Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_gpio.c
+    Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_rcc.c
+    Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_utils.c
+    Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_bus.c
+
+    #project_related_files
+    
+    #project_related_files
+
+
+    # FreeRTOS_files
+    ThirdParty/FreeRTOS/tasks.c
+    ThirdParty/FreeRTOS/queue.c
+    ThirdParty/FreeRTOS/list.c
+    ThirdParty/FreeRTOS/timers.c
+    ThirdParty/FreeRTOS/event_groups.c
+    ThirdParty/FreeRTOS/portable/GCC/ARM_CM4F/port.c
+    ThirdParty/FreeRTOS/portable/MemMang/heap_4.c
+    ThirdParty/FreeRTOS/croutine.c
+    ThirdParty/FreeRTOS/stream_buffer.c
+    # FreeRTOS_files
+    
+)
+
+
+add_executable(firmware.elf ${SOURCES})
+
+target_compile_options(firmware.elf PRIVATE
+    ${MCU_FLAGS}
+    -Wall
+    -O0
+    -g3
+    -DSTM32F407xx
+    -DUSE_FULL_LL_DRIVER
+)
+target_compile_definitions(firmware.elf PRIVATE
+    STM32F407xx
+    USE_HAL_DRIVER
+    USE_FULL_LL_DRIVER
+
+)
+
+# target_link_options(firmware.elf PRIVATE
+#     ${MCU_FLAGS}
+#     -T${CMAKE_SOURCE_DIR}/linker.ld
+#     -Wl,-Map=firmware.map
+# )
+target_link_options(firmware.elf PRIVATE
+    -T${CMAKE_SOURCE_DIR}/linker.ld
+    -mcpu=cortex-m4
+    -mthumb
+    -mfpu=fpv4-sp-d16
+    -mfloat-abi=hard
+    -Wl,-Map=firmware.map
+    -Wl,--gc-sections
+    --specs=nosys.specs
+    --specs=nano.specs
+    -u _printf_float
+)
+
+target_link_libraries(firmware.elf
+    gcc
+)
+
+# Generate BIN file
+add_custom_command(TARGET firmware.elf POST_BUILD
+    COMMAND arm-none-eabi-objcopy -O binary firmware.elf firmware.bin
+)
+# Path to STM32CubeProgrammer CLI
+set(STM32_PROGRAMMER 
+"C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe")
+
+# Flash target
+add_custom_target(flash
+    COMMAND "${STM32_PROGRAMMER}" 
+            -c port=SWD 
+            -w ${CMAKE_BINARY_DIR}/firmware.bin 0x08000000 
+            -v -rst
+    DEPENDS firmware.elf
+    COMMENT "Flashing STM32..."
+)
